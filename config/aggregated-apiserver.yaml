@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-apiserver-svc-apiserver
+  namespace: default
+  labels:
+    api: test-apiserver-svc
+    apiserver: "true"
+spec:
+  selector:
+    matchLabels:
+      api: test-apiserver-svc
+      apiserver: "true"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        api: test-apiserver-svc
+        apiserver: "true"
+    spec:
+      containers:
+      - name: apiserver
+        image: registry.smtx.io/yuming.tang/test-apiserver
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: apiserver-certs
+          mountPath: /apiserver.local.config/certificates
+          readOnly: true
+        command:
+        - "./apiserver"
+        args:
+        - "--tls-cert-file=/apiserver.local.config/certificates/tls.crt"
+        - "--tls-private-key-file=/apiserver.local.config/certificates/tls.key"
+        - "--audit-log-path=-"
+        - "--feature-gates=APIPriorityAndFairness=false"
+        - "--audit-log-maxage=0"
+        - "--audit-log-maxbackup=0"
+        - "--bind-address=0.0.0.0"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 30Mi
+      volumes:
+      - name: apiserver-certs
+        secret:
+          secretName: test-apiserver-svc
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: test-apiserver-svc
+  namespace: default
+  labels:
+    api: test-apiserver-svc
+    apiserver: "true"
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURyVENDQXBXZ0F3SUJBZ0lJTXk3eTVrRzNRTE13RFFZSktvWklodmNOQVFFTEJRQXdjakVMTUFrR0ExVUUKQmhNQ2RXNHhDekFKQmdOVkJBZ01Bbk4wTVFvd0NBWURWUVFIREFGc01Rb3dDQVlEVlFRS0RBRnZNUXN3Q1FZRApWUVFMREFKdmRURXhNQzhHQTFVRUF3d29kR1Z6ZEMxaGNHbHpaWEoyWlhJdGMzWmpMV05sY25ScFptbGpZWFJsCkxXRjFkR2h2Y21sMGVUQWVGdzB5TWpBNU1qQXhNakkxTkRCYUZ3MHpNakE1TVRjeE1qSTFOREJhTUNreEp6QWwKQmdOVkJBTVRIblJsYzNRdFlYQnBjMlZ5ZG1WeUxYTjJZeTVrWldaaGRXeDBMbk4yWXpDQ0FTSXdEUVlKS29aSQpodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQU1USkQvR0xaMHpjbjNidWd0RGVOemFKcEE3TklMMmlWQ0FxCjduV2dWcmN3bkc2OCtKVHFGTW9JQ3dLazVjd25vL2I0SnRycTM2dXNNdzRDcmxmZ1A4QnBPaGhaVFlDNFNhNnEKVU05Tko1UnlMQWl5dkw4ME1PQlFDQ3RwZFNlL3JCNDIxTDNOMEtrKzRDOHFDdUFRYm1ZNXZPY2NXbTJ1bWJFWQptQ1cwaTYrVjloR2g0a24wOXhkNGNLWTE3bEpKU3NPUVpMSUJabDh3aEcxQ2ZNNXRJUmQzejF4Q1pISHJlMytGCnUwVjlnR2dCVzJEM1N0anZadWFlUkNsL2tBSUQ5MTcrdm1vVFlxWFBiM21UZ0hBU3BFMXJSZWZLTzRMc1krZUIKQ3FpREN3Z09nWExWc2NoL1RXSFVJdjVBZ21qWFo1bWpRREdPdk8rcW01VEhoOS9pcXY4Q0F3RUFBYU9CanpDQgpqREFPQmdOVkhROEJBZjhFQkFNQ0JhQXdIUVlEVlIwbEJCWXdGQVlJS3dZQkJRVUhBd0VHQ0NzR0FRVUZCd01DCk1COEdBMVVkSXdRWU1CYUFGR3c1NWMrWHgvVnd0TEtnQ0sxclpPalJ2VGdlTURvR0ExVWRFUVF6TURHQ0NXeHYKWTJGc2FHOXpkSUllZEdWemRDMWhjR2x6WlhKMlpYSXRjM1pqTG1SbFptRjFiSFF1YzNaamh3Ui9BQUFCTUEwRwpDU3FHU0liM0RRRUJDd1VBQTRJQkFRQUpXcVFXN0xLN3BEN1VJK2NpOU5FSlRnelkzSE9haHZRdEVSUEUwOFJGCmVpeVBCK3dGblpTeHd0UEdhUTI4eWx4NEJSQlIxOEhXRWtYZmZmNzdWZTF1TVR5cVRWRk5WTm1XdXVQbXVHSVcKSWIvS3JGRTBLd3dqZ2QyemhlSEttU01scGRMdGpwbCtFZTVCeWFqN0RDbUJoRmhsWmZkZVplWkduNE1TNmcxagp4UEg3Y2pPbFUzVTlPSGJ6alRUWldUSGpLY3VDaHJkV0U4SytZQ1FVQkFWN3dIRFB2N09Oa095ZGl6bUc5Q3FaCloxK3UrOHcrTWN1NW84dFMrZ2p2emFsUlFBVHBtR20yUVA5ZnB0QkJ0Um5ja0czMmI5TVAyL2ZKbCt2cXVDRDMKWFlSYkh0dDJ0bzJsczNiU09ES3NoNFJBVkxEaFU1dnp4V1VWUWpiRkxWVisKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBeE1rUDhZdG5UTnlmZHU2QzBONDNOb21rRHMwZ3ZhSlVJQ3J1ZGFCV3R6Q2Nicno0CmxPb1V5Z2dMQXFUbHpDZWo5dmdtMnVyZnE2d3pEZ0t1VitBL3dHazZHRmxOZ0xoSnJxcFF6MDBubEhJc0NMSzgKdnpRdzRGQUlLMmwxSjcrc0hqYlV2YzNRcVQ3Z0x5b0s0QkJ1WmptODV4eGFiYTZac1JpWUpiU0xyNVgyRWFIaQpTZlQzRjNod3BqWHVVa2xLdzVCa3NnRm1YekNFYlVKOHptMGhGM2ZQWEVKa2NldDdmNFc3UlgyQWFBRmJZUGRLCjJPOW01cDVFS1grUUFnUDNYdjYrYWhOaXBjOXZlWk9BY0JLa1RXdEY1OG83Z3V4ajU0RUtxSU1MQ0E2QmN0V3gKeUg5TllkUWkva0NDYU5kbm1hTkFNWTY4NzZxYmxNZUgzK0txL3dJREFRQUJBb0lCQUV1bTdIMDAxWnJEK240egpoWkVjek9jbmxTMm5pSjIreVU2d2tvb2dBUlplRnRXdnluVWRaSzZpMXZER1NoM3BZMnl2eStnL2dZdXpJTkdUCkVFbHlTYkFFQkRTV0tHaUM4TGk0ZTJhbXg3K1hBUHk3RWpzRHFvS2g0Zklta2NhZE5tTkxPeEJaRG8zeVFTZUEKcHp1cXRYYVJYZUVQa21nMlJwbkIxY1F4Rzc1OVlNOCtETWZXTmxJZjVGejNsbytpMkR4K0ZtT3lCdFZKTEgxWQpRMHNVVnRPR2dBRkx2ZW5EZ2xDYUNaYVVpWnB3M1F6Z1NCUGlQTlZnWXg0Zm9RMUFHaWd5aG15Z214azdDZmVWCmU3OGRvNjdWamNZb0xwK2NaR3NaVStSRmFydGsvdUxqeHk3cllvcGZkbHZic2ZxZjlwZE16c2JLcEwzeHFid0MKR2s2VEhZRUNnWUVBMzJodkxjQXVzakdaVWNsRksyZDVvVk5ydmVmOUFDVW9WVVp6dzhkYWYwRE1lajAwWGNBNwpINzdjUkFmTHZVVzc0Y1ozK2hKbUpCRDBLeGRxTmZRTDdBYjlYNUZ3R25hblp1STJteXVBak56dFliNkRUcjF3CkZMZ2l4VG9FZDBjb3hYSE5nTmUzblZQZWRZWmV4TlJ0SWIzTVJpSzlDUUZNbUJxQUFaMVNTOEVDZ1lFQTRYNWMKbmpueEMxVjVuQmgrTy9oWFZ2Q0ZXa0FjZnNnemVLT1ZnRWxhNVhoSVpGV0NRTGVNSDlmOHlzbGFRWXMvV203WAo2RlRmOXpFWlNDNUt6a0VMb1UyZE9FamZoSVUzYk5JWStsQ1kyYnA0UVlxYmR1dEY4dk54VjlFRklzbktjeTdoCmRTbXgyNVhyckFoSktJU3ljVVhmalRydXp0ZEp2d1NVTnUyZHByOENnWUVBMkRPWi9IMlM4ekhhdlhKNWRRTEQKaTZOT2prNzI0ZkFUczBybDkxNXlydG5IeUxoNGVBM3phY3BzSVk0bDFucW8wMXNkZXEzWm1TZXJGQlNwM2FMYQo4c1RrNlZxM1VYVG9sa0Z2TlFXSmQwaktsYUFvTk1oUnNrdHNvczk5eU96ZGdRNmNJUWNpRTZnNWppVEdpOWRECjhiWmEvTGpibGQ1akFJUU13d003eEVFQ2dZRUFuSVZzM3J2VGNJMlZTMS9KQi9HYkZwTC96YVNnNHZRdW5qZlcKaDJUanZsTGUxUjV4dW1CdDJKREJQVFhFKzZnZmdyTmNGVDRNOUhYVldjQWdWc2padk02MktpS1RYRlpvSVpZNApsbEFwdVVCeFJ2Vmljb3BmVklQZEVoclptTXMvUnZLc3R2b0pKaVlMbjY5a3NNWmpZck1ndU5UR2ZUYjlUcVZzCkNEQ3A5TnNDZ1lFQXBiRmR1Z3A4bytYUTF6b0FxUVQzb3VDV0ZUZWtCRzlkZUladkJPRlRjdjhsVTNya0tjaDkKcVpqUW03NDZIcjlYbWlYS3d4WkdNcU9iR3RyU1FUSGJoV1VKQzhpajNxM083bER5YlJBLzFQOFlxOFBrRFR2MgowYzE5cFFyQ3B4OEZZbTBCb2VudTRDVitXZmlnRE96TjFtVm9ETEJEM0RYd1F5SGErYlJRdGUwPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-apiserver-svc
+  namespace: default
+  labels:
+    api: test-apiserver-svc
+    apiserver: "true"
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 443
+  selector:
+    api: test-apiserver-svc
+    apiserver: "true"

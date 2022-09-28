@@ -1,0 +1,6 @@
+apiVersion: test.felinae98.cn/v1
+kind: Foobar
+metadata:
+  name: test
+  namespace: default
+request: world
